@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="Job-portal-backend/Job-portal-backend.csproj" />
+  <Project Path="Job-portal-frontend/job-portal-frontend.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>
