@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Job_portal_backend.Model
@@ -22,5 +23,14 @@ namespace Job_portal_backend.Model
         public string Password { get; set; }
 
         public DateTime CreatedOn { get; set; }
+
+        // One-to-one relationship: User holds the foreign key to Candidate
+        public int? CandidateId { get; set; }
+
+        [ForeignKey(nameof(CandidateId))]
+        public Candidate Candidate { get; set; }
+
+        // Role of the user: 'admin' or 'candidate'
+        public string Role { get; set; }
     }
 }

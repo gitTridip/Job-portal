@@ -10,7 +10,6 @@ namespace Job_portal_backend.Model
     [Index(nameof(MobileNo), IsUnique = true)]
     public class Candidate
     {
-        [NotMapped]
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set;}
@@ -23,5 +22,6 @@ namespace Job_portal_backend.Model
         public string MobileNo { get; set;}
         public string Skills { get; set;}
         public int Experience { get; set;}
+        public string ResumeUrl { get; set;}
     }
 }

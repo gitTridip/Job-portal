@@ -1,7 +1,4 @@
 <Solution>
-  <Folder Name="/Solution Items/">
-    <File Path=".gitignore" />
-  </Folder>
   <Project Path="Job-portal-backend/Job-portal-backend.csproj" />
   <Project Path="Job-portal-frontend/job-portal-frontend.esproj">
     <Build />
