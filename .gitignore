@@ -1,9 +1,9 @@
 # Visual Studio
 .vs/
 
-# Build folders
-bin/
-obj/
+# Build outputs
+**/bin/
+**/obj/
 
 # User files
 *.user
@@ -12,5 +12,5 @@ obj/
 # React
 node_modules/
 
-# Environment files
+# Environment
 .env
