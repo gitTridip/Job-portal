@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'http://localhost:5165/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -19,64 +19,40 @@ api.interceptors.request.use((config) => {
 });
 
 // Auth endpoints
+// Login Request: { identifier: email|mobile, password: string }
+// Login Response: { status: "success", data: { Token, ExpiresAt, user: { Id, Name, Email, Mobile, Role, CreatedOn } } }
+// Register Request: { Name, Email, Password, Mobile?, Role }
+// Register Response: { status: "success", data: { Id, Name, Email, Mobile, Role, CreatedOn } }
 export const authAPI = {
-  register: (data) => api.post('/auth/register', data),
-  login: (data) => api.post('/auth/login', data),
-};
-
-// Employee endpoints
-export const employeeAPI = {
-  getProfile: () => api.get('/employee/profile'),
-  updateProfile: (data) => api.put('/employee/profile', data),
-};
-
-// Resume endpoints
-export const resumeAPI = {
-  upload: (file) => {
-    const formData = new FormData();
-    formData.append('resumeFile', file);
-    return api.post('/resume/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+  register: (data) => {
+    // Payload: { Name, Email, Password, Mobile, Role }
+    return api.post('/auth/register', data);
+  },
+  login: (data) => {
+    // Payload: { identifier: email|mobile, password }
+    return api.post('/auth/login', { 
+      identifier: data.identifier || data.email, 
+      password: data.password 
     });
   },
-  get: () => api.get('/resume'),
-  delete: () => api.delete('/resume'),
+  logout: () => api.post('/auth/logout'),
 };
 
-// Company endpoints
-export const companyAPI = {
-  getAll: () => api.get('/companies'),
-  getMyCompany: () => api.get('/companies/my-company'),
-  create: (data) => api.post('/companies', data),
-  update: (id, data) => api.put(`/companies/${id}`, data),
-  getById: (id) => api.get(`/companies/${id}`),
-};
-
-// Jobs endpoints
-export const jobsAPI = {
-  getAll: () => api.get('/jobs'),
-  getById: (id) => api.get(`/jobs/${id}`),
-  create: (data) => api.post('/jobs', data),
-  update: (id, data) => api.put(`/jobs/${id}`, data),
-  delete: (id) => api.delete(`/jobs/${id}`),
-  getMyJobs: () => api.get('/jobs/my-jobs'),
-};
-
-// Applications endpoints
-export const applicationsAPI = {
-  create: (data) => api.post('/applications', data),
-  getMyApplications: () => api.get('/applications/my-applications'),
-  getById: (id) => api.get(`/applications/${id}`),
-  getByJobId: (jobId) => api.get(`/applications/job/${jobId}`),
-  getDetails: (applicationId) => api.get(`/applications/details/${applicationId}`),
-  shortlist: (id) => api.put(`/applications/${id}/shortlist`),
-  reject: (id) => api.put(`/applications/${id}/reject`),
-};
-
-// Dashboard endpoints
-export const dashboardAPI = {
-  getEmployeeDashboard: () => api.get('/dashboard/employee'),
-  getEmployerDashboard: () => api.get('/dashboard/employer'),
+// Drive endpoints - Job Drives listing and details
+// Response format for all drives: { status: "success", data: {...} | [...] }
+export const driveAPI = {
+  // GET /api/drive
+  // Response: { status: "success", data: [{ DriveId, Title, CompanyName, Description, City, Venue, DriveDate, ReportingTime, QualificationRequired, ExperienceRequired, ContactPerson, ContactEmail, Status, AdminId, CreatedOn, UpdatedOn }, ...] }
+  getAll: () => api.get('/drive'),
+  
+  // GET /api/drive/{id}
+  // Response: { status: "success", data: { DriveId, Title, CompanyName, Description, City, Venue, DriveDate, ReportingTime, QualificationRequired, ExperienceRequired, ContactPerson, ContactEmail, Status, AdminId, CreatedOn, UpdatedOn } }
+  getById: (id) => api.get(`/drive/${id}`),
+  
+  // POST /api/drive (Admin only, requires JWT)
+  // Payload: { Title, CompanyName, Description, City, Venue, DriveDate, ReportingTime, QualificationRequired, ExperienceRequired, ContactPerson, ContactEmail }
+  // Response: { status: "success", data: { DriveId, Title, CompanyName, Description, City, Venue, DriveDate, ReportingTime, QualificationRequired, ExperienceRequired, ContactPerson, ContactEmail, Status, AdminId, CreatedOn } }
+  create: (data) => api.post('/drive', data),
 };
 
 export default api;

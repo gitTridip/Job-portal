@@ -36,18 +36,28 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const response = await authAPI.login(formData);
+      // Backend expects: { identifier: email|mobile, password }
+      const response = await authAPI.login({
+        identifier: formData.email, // Can be email or mobile
+        password: formData.password
+      });
 
-      if (response.data.token) {
-        login(response.data, response.data.token);
-        navigate(
-          response.data.role === 'Employee' 
-            ? '/employee-dashboard' 
-            : '/employer-dashboard'
-        );
+      // Backend response: { status: "success", data: { Token, ExpiresAt, user: { Id, Name, Email, Mobile, Role, CreatedOn } } }
+      if (response.data.status === 'success' && response.data.data) {
+        const { Token, user } = response.data.data;
+        if (Token && user) {
+          login(user, Token);
+          navigate('/drives');
+        } else {
+          setError('Login failed. Invalid response from server.');
+        }
+      } else {
+        setError(response.data.data || 'Login failed. Please try again.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.');
+      // Backend returns: { status: "failure", data: "error message" }
+      const errorMessage = err.response?.data?.data || err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

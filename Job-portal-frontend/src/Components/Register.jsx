@@ -12,11 +12,12 @@ const Register = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: '',
+    Name: '',
+    Email: '',
+    Password: '',
     confirmPassword: '',
-    role: 'Employee',
+    Mobile: '',
+    Role: 'candidate',
   });
 
   const handleChange = (e) => {
@@ -32,40 +33,57 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    if (!formData.fullName || !formData.email || !formData.password) {
-      setError('All fields are required');
+    if (!formData.Name || !formData.Email || !formData.Password) {
+      setError('Name, email and password are required');
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
+    if (formData.Password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (formData.Password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
 
     try {
       setLoading(true);
-      const response = await authAPI.register(formData);
+      // Backend expects: { Name, Email, Password, Mobile?, Role }
+      const registerData = {
+        Name: formData.Name,
+        Email: formData.Email,
+        Password: formData.Password,
+        Mobile: formData.Mobile || null,
+        Role: formData.Role,
+      };
 
-      if (response.data.success) {
-        setFormData({ fullName: '', email: '', password: '', confirmPassword: '', role: 'Employee' });
-        // Auto-login after registration
+      // Backend response: { status: "success", data: { Id, Name, Email, Mobile, Role, CreatedOn } }
+      const response = await authAPI.register(registerData);
+
+      if (response.data.status === 'success') {
+        // Auto-login after successful registration
         const loginResponse = await authAPI.login({
-          email: formData.email,
-          password: formData.password,
+          identifier: formData.Email, // Use email as identifier
+          password: formData.Password,
         });
 
-        if (loginResponse.data.token) {
-          login(loginResponse.data, loginResponse.data.token);
-          navigate(formData.role === 'Employee' ? '/employee-dashboard' : '/employer-dashboard');
+        if (loginResponse.data.status === 'success' && loginResponse.data.data) {
+          const { Token, user } = loginResponse.data.data;
+          if (Token && user) {
+            login(user, Token);
+            setFormData({ Name: '', Email: '', Password: '', confirmPassword: '', Mobile: '', Role: 'candidate' });
+            navigate('/drives');
+          }
         }
+      } else {
+        setError(response.data.data || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed. Please try again.');
+      // Backend returns: { status: "failure", data: "error message" }
+      const errorMessage = err.response?.data?.data || err.message || 'Registration failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -89,15 +107,15 @@ const Register = () => {
             )}
 
             <div className="form-group">
-              <label htmlFor="fullName">Full Name</label>
+              <label htmlFor="Name">Full Name</label>
               <div className="input-wrapper">
                 <User size={20} />
                 <input
                   type="text"
-                  id="fullName"
-                  name="fullName"
+                  id="Name"
+                  name="Name"
                   placeholder="John Doe"
-                  value={formData.fullName}
+                  value={formData.Name}
                   onChange={handleChange}
                   required
                 />
@@ -105,15 +123,15 @@ const Register = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="email">Email Address</label>
+              <label htmlFor="Email">Email Address</label>
               <div className="input-wrapper">
                 <Mail size={20} />
                 <input
                   type="email"
-                  id="email"
-                  name="email"
+                  id="Email"
+                  name="Email"
                   placeholder="john@example.com"
-                  value={formData.email}
+                  value={formData.Email}
                   onChange={handleChange}
                   required
                 />
@@ -121,14 +139,29 @@ const Register = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="role">I am a</label>
+              <label htmlFor="Mobile">Mobile Number (Optional)</label>
+              <div className="input-wrapper">
+                <Briefcase size={20} />
+                <input
+                  type="tel"
+                  id="Mobile"
+                  name="Mobile"
+                  placeholder="+1 (555) 000-0000"
+                  value={formData.Mobile}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="Role">Role</label>
               <div className="radio-group">
                 <label className="radio-label">
                   <input
                     type="radio"
-                    name="role"
-                    value="Employee"
-                    checked={formData.role === 'Employee'}
+                    name="Role"
+                    value="candidate"
+                    checked={formData.Role === 'candidate'}
                     onChange={handleChange}
                   />
                   <span className="radio-custom"></span>
@@ -137,27 +170,27 @@ const Register = () => {
                 <label className="radio-label">
                   <input
                     type="radio"
-                    name="role"
-                    value="Employer"
-                    checked={formData.role === 'Employer'}
+                    name="Role"
+                    value="recruiter"
+                    checked={formData.Role === 'recruiter'}
                     onChange={handleChange}
                   />
                   <span className="radio-custom"></span>
-                  Employer
+                  Recruiter
                 </label>
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="password">Password</label>
+              <label htmlFor="Password">Password</label>
               <div className="input-wrapper">
                 <Lock size={20} />
                 <input
                   type="password"
-                  id="password"
-                  name="password"
+                  id="Password"
+                  name="Password"
                   placeholder="Enter password"
-                  value={formData.password}
+                  value={formData.Password}
                   onChange={handleChange}
                   required
                 />

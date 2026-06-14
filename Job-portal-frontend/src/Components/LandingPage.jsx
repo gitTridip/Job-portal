@@ -1,22 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Users, Target, ArrowRight, Star, MapPin, Zap } from 'lucide-react';
+import { Briefcase, Users, Target, ArrowRight, Star, Calendar, MapPin } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import './LandingPage.css';
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      if (user?.role === 'Employee') {
-        navigate('/employee-dashboard');
-      } else {
-        navigate('/employer-dashboard');
-      }
-    }
-  }, [isAuthenticated]);
 
   return (
     <div className="landing-page">
@@ -25,32 +15,33 @@ const LandingPage = () => {
         <div className="hero-container">
           <div className="hero-content">
             <h1 className="hero-title">
-              Find Your Dream Job or Hire Top Talent
+              Discover Job Drives & Career Opportunities
             </h1>
             <p className="hero-subtitle">
-              Connect with the best opportunities and talents in the job market. 
-              Start your career journey or build your perfect team today.
+              Browse upcoming campus placements and hiring drives. Find the perfect fit for your career with leading companies.
             </p>
             <div className="hero-buttons">
               <button 
                 className="btn-hero-primary"
-                onClick={() => navigate('/register')}
+                onClick={() => navigate('/drives')}
               >
-                Get Started
+                Explore Drives
                 <ArrowRight size={20} />
               </button>
-              <button 
-                className="btn-hero-secondary"
-                onClick={() => navigate('/jobs')}
-              >
-                Browse Jobs
-              </button>
+              {!isAuthenticated && (
+                <button 
+                  className="btn-hero-secondary"
+                  onClick={() => navigate('/register')}
+                >
+                  Create Account
+                </button>
+              )}
             </div>
           </div>
           <div className="hero-illustration">
             <div className="illustration-content">
               <Briefcase size={120} />
-              <Users size={100} style={{ marginTop: '-30px', marginLeft: '60px' }} />
+              <Calendar size={80} style={{ marginTop: '-20px', marginLeft: '60px' }} />
             </div>
           </div>
         </div>
@@ -60,41 +51,41 @@ const LandingPage = () => {
       <section className="features">
         <div className="features-container">
           <div className="section-header">
-            <h2>Why Choose JobHub?</h2>
-            <p>Discover the features that make us the best job portal</p>
+            <h2>Why Use JobHub Drives?</h2>
+            <p>Everything you need to know about our job drive platform</p>
           </div>
 
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">
-                <Zap size={32} />
+                <Calendar size={32} />
               </div>
-              <h3>Quick & Easy</h3>
-              <p>Find or post jobs in seconds with our simple and intuitive interface.</p>
+              <h3>Organized Schedule</h3>
+              <p>Access complete drive schedules with dates, times, and venues all in one place.</p>
+            </div>
+
+            <div className="feature-card">
+              <div className="feature-icon">
+                <MapPin size={32} />
+              </div>
+              <h3>Location Details</h3>
+              <p>Get clear location information, reporting times, and venue details for every drive.</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon">
                 <Target size={32} />
               </div>
-              <h3>Perfect Matches</h3>
-              <p>Advanced filtering helps employers find the right candidates quickly.</p>
+              <h3>Eligibility Info</h3>
+              <p>Know the exact qualifications and experience required before applying.</p>
             </div>
 
             <div className="feature-card">
               <div className="feature-icon">
                 <Users size={32} />
               </div>
-              <h3>Connect Directly</h3>
-              <p>Direct communication between employers and candidates for better outcomes.</p>
-            </div>
-
-            <div className="feature-card">
-              <div className="feature-icon">
-                <Star size={32} />
-              </div>
-              <h3>Verified Profiles</h3>
-              <p>All profiles are verified ensuring quality and authenticity in the portal.</p>
+              <h3>Direct Contact</h3>
+              <p>Connect directly with recruiters and get your questions answered instantly.</p>
             </div>
           </div>
         </div>
@@ -104,33 +95,33 @@ const LandingPage = () => {
       <section className="how-it-works">
         <div className="how-container">
           <div className="section-header">
-            <h2>How It Works</h2>
-            <p>Simple steps to get started</p>
+            <h2>How To Use JobHub</h2>
+            <p>Simple steps to find your next opportunity</p>
           </div>
 
           <div className="steps-grid">
             <div className="step">
               <div className="step-number">1</div>
-              <h3>Create Account</h3>
-              <p>Sign up as a job seeker or employer in just a few minutes.</p>
+              <h3>Browse Drives</h3>
+              <p>Visit our drives section to see all upcoming job fairs and recruitment drives.</p>
             </div>
 
             <div className="step">
               <div className="step-number">2</div>
-              <h3>Complete Profile</h3>
-              <p>Add your details, skills, and preferences to your profile.</p>
+              <h3>Check Details</h3>
+              <p>Read comprehensive information about each drive, including eligibility criteria.</p>
             </div>
 
             <div className="step">
               <div className="step-number">3</div>
-              <h3>Browse & Apply</h3>
-              <p>Find jobs that match your skills and apply instantly.</p>
+              <h3>Get Contact Info</h3>
+              <p>View recruiter contact details and reach out to them directly.</p>
             </div>
 
             <div className="step">
               <div className="step-number">4</div>
-              <h3>Get Hired</h3>
-              <p>Get shortlisted and connect with your future employer.</p>
+              <h3>Attend & Apply</h3>
+              <p>Attend the drive on the scheduled date and apply for positions directly.</p>
             </div>
           </div>
         </div>
@@ -139,14 +130,14 @@ const LandingPage = () => {
       {/* Call to Action */}
       <section className="cta-section">
         <div className="cta-container">
-          <h2>Ready to Start?</h2>
-          <p>Join thousands of professionals and employers on JobHub</p>
+          <h2>Start Your Career Journey Today</h2>
+          <p>Explore job drives and connect with top companies</p>
           <div className="cta-buttons">
             <button 
               className="btn-cta-primary"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/drives')}
             >
-              Create Account Now
+              View All Drives
             </button>
             <button 
               className="btn-cta-secondary"
