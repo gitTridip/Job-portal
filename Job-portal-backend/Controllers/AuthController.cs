@@ -7,21 +7,24 @@ using Microsoft.Extensions.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Job_portal_backend.Services;
 
 namespace Job_portal_backend.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class LoginController : ControllerBase
+    public class AuthController : ControllerBase
     {
         private readonly UsersContext _context;
 
         private readonly JwtSettings _jwtSettings;
+        public readonly ITokenRevocationService _revocationService;
 
-        public LoginController(UsersContext context, IOptions<JwtSettings> jwtOptions)
+        public AuthController(UsersContext context, IOptions<JwtSettings> jwtOptions, ITokenRevocationService revocationService)
         {
             _context = context;
             _jwtSettings = jwtOptions.Value;
+            _revocationService = revocationService;
         }
 
         public class LoginRequest
@@ -30,8 +33,9 @@ namespace Job_portal_backend.Controllers
             public string Password { get; set; }
         }
 
+        [Route("login")]
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             if (request == null || string.IsNullOrWhiteSpace(request.Identifier) || string.IsNullOrWhiteSpace(request.Password))
             {
@@ -40,7 +44,7 @@ namespace Job_portal_backend.Controllers
             }
 
             // Try to find user by email or mobile
-            var user = await _context.users.FirstOrDefaultAsync(u => u.Email == request.Identifier || u.Mobile == request.Identifier);
+            var user = await _context.users.FirstOrDefaultAsync(u => u.Email == request.Identifier || (u.Mobile != null && u.Mobile == request.Identifier));
             if (user == null)
             {
                 var resp = new Model.ApiResponse<string>("failure", "Invalid credentials.");
@@ -90,13 +94,76 @@ namespace Job_portal_backend.Controllers
                     user.Name,
                     user.Email,
                     user.Mobile,
-                    user.CandidateId,
                     user.Role,
                     user.CreatedOn
                 }
             };
 
             var success = new Model.ApiResponse<object>("success", data);
+            return Ok(success);
+        }
+
+        [Route("logout")]
+        [HttpPost]
+        public IActionResult Logout()
+        {
+            // Extract token from Authorization header
+            var auth = Request.Headers["Authorization"].ToString();
+            var token = string.Empty;
+            if (!string.IsNullOrEmpty(auth) && auth.StartsWith("Bearer "))
+            {
+                token = auth.Substring(7);
+            }
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new Model.ApiResponse<string>("failure", "No token provided."));
+            }
+
+            // Optionally, parse token to get expiry and set revocation expiry accordingly
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            System.DateTimeOffset? expiresAt = null;
+            try
+            {
+                var jwt = handler.ReadJwtToken(token);
+                if (jwt.ValidTo != System.DateTime.MinValue)
+                {
+                    expiresAt = System.DateTimeOffset.UtcNow + (jwt.ValidTo - DateTime.UtcNow);
+                }
+            }
+            catch
+            {
+                // ignore parse errors - still revoke token
+            }
+
+            _revocationService.RevokeToken(token, expiresAt);
+
+            return Ok(new Model.ApiResponse<string>("success", "Logged out successfully."));
+        }
+        [Route("register")]
+        [HttpPost]
+
+        public async Task<IActionResult> Register([FromBody] User user)
+        {
+            if (user == null || string.IsNullOrWhiteSpace(user.Email) || string.IsNullOrWhiteSpace(user.Password))
+            {
+                var resp = new Model.ApiResponse<string>("failure", "Email and password are required.");
+                return BadRequest(resp);
+            }
+            // Check if user with the same email already exists
+            var existingUser = await _context.users.FirstOrDefaultAsync(u => u.Email == user.Email);
+            if (existingUser != null)
+            {
+                var resp = new Model.ApiResponse<string>("failure", "User with this email already exists.");
+                return Conflict(resp);
+            }
+            // Hash the password before saving
+            var hasher = new PasswordHasher<User>();
+            user.Password = hasher.HashPassword(user, user.Password);
+            user.CreatedOn = DateTime.UtcNow;
+            _context.users.Add(user);
+            await _context.SaveChangesAsync();
+            var success = new Model.ApiResponse<object>("success", new { user.Id, user.Name, user.Email, user.Mobile, user.Role, user.CreatedOn });
             return Ok(success);
         }
     }

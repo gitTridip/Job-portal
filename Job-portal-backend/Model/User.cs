@@ -1,36 +1,27 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Job_portal_backend.Model
 {
     public class User
     {
-        [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Name is required.")]
+        [Required]
         public string Name { get; set; }
 
-        [Required(ErrorMessage = "Email is required.")]
+        [Required]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "Mobile number is required.")]
+        // Mobile is now optional
         public string Mobile { get; set; }
 
-        [Required(ErrorMessage = "Password is required.")]
+        [Required]
         public string Password { get; set; }
 
-        public DateTime CreatedOn { get; set; }
-
-        // One-to-one relationship: User holds the foreign key to Candidate
-        public int? CandidateId { get; set; }
-
-        [ForeignKey(nameof(CandidateId))]
-        public Candidate Candidate { get; set; }
-
-        // Role of the user: 'admin' or 'candidate'
+        [Required]
         public string Role { get; set; }
+
+        public DateTime CreatedOn { get; set; }
     }
 }
