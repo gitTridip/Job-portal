@@ -139,6 +139,53 @@
   position: absolute;
 }
 
+/* Role Selector */
+.role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 12px;
+}
+
+.role-card {
+  padding: 20px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.role-card:hover {
+  border-color: var(--primary-blue);
+  background: var(--light-blue);
+}
+
+.role-card.active {
+  border-color: var(--primary-blue);
+  background: var(--light-blue);
+  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.role-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.role-card h3 {
+  margin: 10px 0 5px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--gray-dark);
+}
+
+.role-card p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--gray-medium);
+}
+
 /* Error Alert */
 .error-alert {
   display: flex;

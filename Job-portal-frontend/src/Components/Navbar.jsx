@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, LogOut } from 'lucide-react';
+import { Menu, X, LogOut, Briefcase, Home } from 'lucide-react';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, getUserRole } = useAuth();
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const userRole = getUserRole();
+  const isRecruiter = userRole === 'recruiter';
 
   const handleLogout = async () => {
     try {
@@ -37,9 +39,33 @@ const Navbar = () => {
 
         {/* Desktop Navigation */}
         <div className="nav-menu-desktop">
-          <Link to="/drives" className="nav-link">
-            Job Drives
-          </Link>
+          {isAuthenticated && isRecruiter && (
+            <>
+              <Link to="/recruiter-dashboard" className="nav-link">
+                <Briefcase size={18} />
+                Dashboard
+              </Link>
+            </>
+          )}
+          
+          {isAuthenticated && !isRecruiter && (
+            <>
+              <Link to="/job-seeker-dashboard" className="nav-link">
+                <Home size={18} />
+                Dashboard
+              </Link>
+              <Link to="/drives" className="nav-link">
+                <Briefcase size={18} />
+                Browse Jobs
+              </Link>
+            </>
+          )}
+
+          {!isAuthenticated && (
+            <Link to="/drives" className="nav-link">
+              Job Drives
+            </Link>
+          )}
           
           {!isAuthenticated ? (
             <div className="nav-actions">
@@ -59,7 +85,8 @@ const Navbar = () => {
           ) : (
             <div className="user-menu">
               <div className="user-info">
-                <span className="user-name">{user?.Name || 'User'}</span>
+                <span className="user-name">{user?.name || user?.Name || 'User'}</span>
+                <span className="user-role">{isRecruiter ? 'Recruiter' : 'Job Seeker'}</span>
               </div>
               <button className="logout-btn" onClick={handleLogout}>
                 <LogOut size={18} />

@@ -42,12 +42,14 @@ const Login = () => {
         password: formData.password
       });
 
-      // Backend response: { status: "success", data: { Token, ExpiresAt, user: { Id, Name, Email, Mobile, Role, CreatedOn } } }
-      if (response.data.status === 'success' && response.data.data) {
-        const { Token, user } = response.data.data;
-        if (Token && user) {
-          login(user, Token);
-          navigate('/drives');
+      // Backend response: { message: "success", data: { token, expiresAt, user: { id, name, email, mobile, role, createdOn } } }
+      if (response.data.message === 'success' && response.data.data) {
+        const { token, user } = response.data.data;
+        if (token && user) {
+          login(user, token);
+          // Redirect based on role
+          const redirectPath = user.role?.toLowerCase() === 'recruiter' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
+          navigate(redirectPath);
         } else {
           setError('Login failed. Invalid response from server.');
         }
@@ -55,7 +57,7 @@ const Login = () => {
         setError(response.data.data || 'Login failed. Please try again.');
       }
     } catch (err) {
-      // Backend returns: { status: "failure", data: "error message" }
+      // Backend returns: { message: "failure", data: "error message" }
       const errorMessage = err.response?.data?.data || err.message || 'Login failed. Please try again.';
       setError(errorMessage);
     } finally {

@@ -16,7 +16,14 @@ namespace Job_portal_backend
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-            builder.Services.AddControllers();
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // Configure JSON serialization to support both camelCase and PascalCase
+                    options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // Accept both camelCase and PascalCase in requests
+                    options.JsonSerializerOptions.WriteIndented = true;
+                });
             builder.Services.AddOpenApi();
 
             // Add CORS configuration for frontend

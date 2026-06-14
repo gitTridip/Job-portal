@@ -18,7 +18,7 @@ const DriveListing = () => {
     try {
       setLoading(true);
       const response = await driveAPI.getAll();
-      if (response.data.status === 'success') {
+      if (response.data.message === 'success') {
         setDrives(response.data.data);
       }
     } catch (err) {

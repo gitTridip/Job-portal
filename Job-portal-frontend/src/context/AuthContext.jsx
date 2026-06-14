@@ -22,8 +22,8 @@ export const AuthProvider = ({ children }) => {
     
     if (token && userData) {
       try {
-        const user = JSON.parse(userData);
-        setUser(user);
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Error parsing user data', error);
@@ -35,10 +35,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
-    setUser(userData);
+    // Ensure role is normalized to lowercase
+    const normalizedUser = {
+      ...userData,
+      role: userData.role ? userData.role.toLowerCase() : 'candidate'
+    };
+    setUser(normalizedUser);
     setIsAuthenticated(true);
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('user', JSON.stringify(normalizedUser));
   };
 
   const logout = () => {
@@ -48,8 +53,31 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
   };
 
+  const getUserRole = () => {
+    return user?.role ? user.role.toLowerCase() : null;
+  };
+
+  const isJobSeeker = () => {
+    const role = getUserRole();
+    return role === 'candidate' || role === 'jobseeker';
+  };
+
+  const isRecruiter = () => {
+    const role = getUserRole();
+    return role === 'recruiter' || role === 'employer';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated, 
+      loading, 
+      login, 
+      logout,
+      getUserRole,
+      isJobSeeker,
+      isRecruiter
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -45,9 +45,6 @@ namespace Job_portal_backend.Model
         [Required]
         [EmailAddress]
         public string ContactEmail { get; set; }
-
-        [Required]
-        public int AdminId { get; set; }
     }
 
     public class DriveUpdateDto : DriveCreateDto

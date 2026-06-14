@@ -19,7 +19,7 @@ const DriveDetails = () => {
     try {
       setLoading(true);
       const response = await driveAPI.getById(id);
-      if (response.data.status === 'success') {
+      if (response.data.message === 'success') {
         setDrive(response.data.data);
       }
     } catch (err) {

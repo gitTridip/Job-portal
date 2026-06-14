@@ -12,12 +12,12 @@ const Register = () => {
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
-    Name: '',
-    Email: '',
-    Password: '',
+    name: '',
+    email: '',
+    password: '',
     confirmPassword: '',
-    Mobile: '',
-    Role: 'candidate',
+    mobile: '',
+    role: 'candidate',
   });
 
   const handleChange = (e) => {
@@ -33,55 +33,58 @@ const Register = () => {
     e.preventDefault();
     setError('');
 
-    if (!formData.Name || !formData.Email || !formData.Password) {
+    if (!formData.name || !formData.email || !formData.password) {
       setError('Name, email and password are required');
       return;
     }
 
-    if (formData.Password !== formData.confirmPassword) {
+    if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (formData.Password.length < 6) {
+    if (formData.password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
 
     try {
       setLoading(true);
-      // Backend expects: { Name, Email, Password, Mobile?, Role }
+      // Backend expects: { name, email, password, mobile, role }
       const registerData = {
-        Name: formData.Name,
-        Email: formData.Email,
-        Password: formData.Password,
-        Mobile: formData.Mobile || null,
-        Role: formData.Role,
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        mobile: formData.mobile || null,
+        role: formData.role,
+        createdOn: "2026-06-14T20:08:28.691Z"
       };
 
-      // Backend response: { status: "success", data: { Id, Name, Email, Mobile, Role, CreatedOn } }
+      // Backend response: { message: "success", data: { id, name, email, mobile, role, createdOn } }
       const response = await authAPI.register(registerData);
 
-      if (response.data.status === 'success') {
+      if (response.data.message === 'success') {
         // Auto-login after successful registration
         const loginResponse = await authAPI.login({
-          identifier: formData.Email, // Use email as identifier
-          password: formData.Password,
+          identifier: formData.email, // Use email as identifier
+          password: formData.password,
         });
 
-        if (loginResponse.data.status === 'success' && loginResponse.data.data) {
-          const { Token, user } = loginResponse.data.data;
-          if (Token && user) {
-            login(user, Token);
-            setFormData({ Name: '', Email: '', Password: '', confirmPassword: '', Mobile: '', Role: 'candidate' });
-            navigate('/drives');
+        if (loginResponse.data.message === 'success' && loginResponse.data.data) {
+          const { token, user } = loginResponse.data.data;
+          if (token && user) {
+            login(user, token);
+            setFormData({ name: '', email: '', password: '', confirmPassword: '', mobile: '', role: 'candidate' });
+            // Redirect based on role
+            const redirectPath = user.role?.toLowerCase() === 'recruiter' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
+            navigate(redirectPath);
           }
         }
       } else {
         setError(response.data.data || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      // Backend returns: { status: "failure", data: "error message" }
+      // Backend returns: { message: "failure", data: "error message" }
       const errorMessage = err.response?.data?.data || err.message || 'Registration failed. Please try again.';
       setError(errorMessage);
     } finally {
@@ -107,15 +110,15 @@ const Register = () => {
             )}
 
             <div className="form-group">
-              <label htmlFor="Name">Full Name</label>
+              <label htmlFor="name">Full Name</label>
               <div className="input-wrapper">
                 <User size={20} />
                 <input
                   type="text"
-                  id="Name"
-                  name="Name"
+                  id="name"
+                  name="name"
                   placeholder="John Doe"
-                  value={formData.Name}
+                  value={formData.name}
                   onChange={handleChange}
                   required
                 />
@@ -123,15 +126,15 @@ const Register = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="Email">Email Address</label>
+              <label htmlFor="email">Email Address</label>
               <div className="input-wrapper">
                 <Mail size={20} />
                 <input
                   type="email"
-                  id="Email"
-                  name="Email"
+                  id="email"
+                  name="email"
                   placeholder="john@example.com"
-                  value={formData.Email}
+                  value={formData.email}
                   onChange={handleChange}
                   required
                 />
@@ -139,58 +142,52 @@ const Register = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="Mobile">Mobile Number (Optional)</label>
+              <label htmlFor="mobile">Mobile Number (Optional)</label>
               <div className="input-wrapper">
                 <Briefcase size={20} />
                 <input
                   type="tel"
-                  id="Mobile"
-                  name="Mobile"
+                  id="mobile"
+                  name="mobile"
                   placeholder="+1 (555) 000-0000"
-                  value={formData.Mobile}
+                  value={formData.mobile}
                   onChange={handleChange}
                 />
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="Role">Role</label>
-              <div className="radio-group">
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="Role"
-                    value="candidate"
-                    checked={formData.Role === 'candidate'}
-                    onChange={handleChange}
-                  />
-                  <span className="radio-custom"></span>
-                  Job Seeker
-                </label>
-                <label className="radio-label">
-                  <input
-                    type="radio"
-                    name="Role"
-                    value="recruiter"
-                    checked={formData.Role === 'recruiter'}
-                    onChange={handleChange}
-                  />
-                  <span className="radio-custom"></span>
-                  Recruiter
-                </label>
+              <label>I am a:</label>
+              <div className="role-selector">
+                <div 
+                  className={`role-card ${formData.role === 'candidate' ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'candidate' }))}
+                >
+                  <div className="role-icon">👤</div>
+                  <h3>Job Seeker</h3>
+                  <p>Looking for opportunities</p>
+                </div>
+                <div 
+                  className={`role-card ${formData.role === 'recruiter' ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'recruiter' }))}
+                >
+                  <div className="role-icon">🏢</div>
+                  <h3>Recruiter</h3>
+                  <p>Hiring top talent</p>
+                </div>
               </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="Password">Password</label>
+              <label htmlFor="password">Password</label>
               <div className="input-wrapper">
                 <Lock size={20} />
                 <input
                   type="password"
-                  id="Password"
-                  name="Password"
+                  id="password"
+                  name="password"
                   placeholder="Enter password"
-                  value={formData.Password}
+                  value={formData.password}
                   onChange={handleChange}
                   required
                 />
