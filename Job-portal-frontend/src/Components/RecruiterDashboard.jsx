@@ -40,7 +40,7 @@ const RecruiterDashboard = () => {
       const response = await driveAPI.getAll();
       if (response.data.message === 'success') {
         // Filter only drives created by current user
-        const userDrives = response.data.data.filter(drive => drive.createdBy === user?.id);
+        const userDrives = response.data.data
         setDrives(userDrives);
       }
     } catch (err) {

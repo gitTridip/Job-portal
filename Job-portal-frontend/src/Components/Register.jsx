@@ -142,9 +142,8 @@ const Register = () => {
                 />
               </div>
             </div>
-
             <div className="form-group">
-              <label htmlFor="mobile">Mobile Number (Optional)</label>
+              <label htmlFor="mobile">Mobile Number</label>
               <div className="input-wrapper">
                 <Briefcase size={20} />
                 <input

@@ -41,11 +41,11 @@ export const authAPI = {
 export const driveAPI = {
   // GET /api/drives - List all drives
   // Response: { message: "success", data: [{ driveId, title, companyName, description, city, venue, driveDate, reportingTime, qualificationRequired, experienceRequired, contactPerson, contactEmail, status, createdBy, createdOn, updatedOn }, ...] }
-  getAll: () => api.get('/drives'),
+  getAll: () => api.get('/drive'),
   
   // GET /api/drives/{id} - Get specific drive
   // Response: { message: "success", data: { driveId, title, companyName, description, city, venue, driveDate, reportingTime, qualificationRequired, experienceRequired, contactPerson, contactEmail, status, createdBy, createdOn, updatedOn } }
-  getById: (id) => api.get(`/drives/${id}`),
+  getById: (id) => api.get(`/drive/${id}`),
   
   // POST /api/drives - Create drive (Admin only, requires JWT)
   // Payload: { title, companyName, description, city, venue, driveDate (yyyy-MM-dd), reportingTime (HH:mm:ss), qualificationRequired, experienceRequired, contactPerson, contactEmail }
@@ -55,11 +55,11 @@ export const driveAPI = {
   // PUT /api/drives/{id} - Update drive (Admin only, requires JWT)
   // Payload: { title, companyName, description, city, venue, driveDate (yyyy-MM-dd), reportingTime (HH:mm:ss), qualificationRequired, experienceRequired, contactPerson, contactEmail }
   // Response: { message: "success", data: { driveId: <id> } }
-  update: (id, data) => api.put(`/drives/${id}`, data),
+  update: (id, data) => api.put(`/drive/${id}`, data),
   
   // DELETE /api/drives/{id} - Delete drive (Admin only, requires JWT)
   // Response: { message: "success", data: "Drive deleted." }
-  delete: (id) => api.delete(`/drives/${id}`),
+  delete: (id) => api.delete(`/drive/${id}`),
 };
 
 // Alias for backward compatibility
