@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, Clock, Mail, Phone, ArrowLeft, AlertCircle, Loader } from 'lucide-react';
 import { driveAPI } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import './DriveDetails.css';
 
 const DriveDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isJobSeeker } = useAuth();
   const [drive, setDrive] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -42,7 +44,7 @@ const DriveDetails = () => {
   if (error) {
     return (
       <div className="drive-details-container">
-        <button className="back-button" onClick={() => navigate('/drives')}>
+        <button className="back-button" onClick={() => (isJobSeeker && isJobSeeker() ? navigate('/job-seeker-dashboard') : navigate('/recruiter-dashboard'))}>
           <ArrowLeft size={20} />
           Back to Drives
         </button>
@@ -57,7 +59,7 @@ const DriveDetails = () => {
   if (!drive) {
     return (
       <div className="drive-details-container">
-        <button className="back-button" onClick={() => navigate('/drives')}>
+        <button className="back-button" onClick={() => (isJobSeeker && isJobSeeker() ? navigate('/job-seeker-dashboard') : navigate('/recruiter-dashboard'))}>
           <ArrowLeft size={20} />
           Back to Drives
         </button>
@@ -70,7 +72,7 @@ const DriveDetails = () => {
 
   return (
     <div className="drive-details-container">
-      <button className="back-button" onClick={() => navigate('/drives')}>
+      <button className="back-button" onClick={() => (isJobSeeker && isJobSeeker() ? navigate('/job-seeker-dashboard') : navigate('/drives'))}>
         <ArrowLeft size={20} />
         Back to Drives
       </button>

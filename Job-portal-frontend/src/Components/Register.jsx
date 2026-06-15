@@ -3,11 +3,13 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Briefcase, AlertCircle, Loader } from 'lucide-react';
 import { authAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import './Auth.css';
 
 const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -75,6 +77,7 @@ const Register = () => {
           const { token, user } = loginResponse.data.data;
           if (token && user) {
             login(user, token);
+            showToast('Registration successful!', 'success');
             setFormData({ name: '', email: '', password: '', confirmPassword: '', mobile: '', role: 'candidate' });
             // Redirect based on role
             const redirectPath = user.role?.toLowerCase() === 'admin' ? '/recruiter-dashboard' : '/job-seeker-dashboard';

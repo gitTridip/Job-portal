@@ -302,6 +302,23 @@
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
+/* Disabled / Applied state for Apply button */
+.btn-apply:disabled,
+.btn-apply[disabled] {
+  background: #e9ecef;
+  color: #6c757d;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.95;
+}
+
+.btn-apply:disabled:hover,
+.btn-apply[disabled]:hover {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
 /* Job Footer */
 .job-footer {
   display: flex;
@@ -489,6 +506,56 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
+}
+
+.apply-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.apply-modal-card {
+  width: min(520px, 90%);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.15);
+}
+
+.apply-modal-card .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.apply-modal-card .modal-header h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #333;
+}
+
+.apply-modal-card p {
+  margin: 0 0 24px;
+  color: #555;
+  line-height: 1.7;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
 /* Buttons */

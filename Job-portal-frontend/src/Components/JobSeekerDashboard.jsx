@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, MapPin, Calendar, Clock, Briefcase, Users, Heart, Share2, AlertCircle, Loader } from 'lucide-react';
-import { driveAPI, applicationsAPI } from '../api/api';
+import { driveAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { getApplicationsForUser, addApplicationForUser } from '../utils/localStorage';
 import './JobSeekerDashboard.css';
 
 const JobSeekerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('browse');
   const [drives, setDrives] = useState([]);
   const [myApplications, setMyApplications] = useState([]);
@@ -15,6 +18,8 @@ const JobSeekerDashboard = () => {
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLocation, setFilterLocation] = useState('');
+  const [confirmApplyOpen, setConfirmApplyOpen] = useState(false);
+  const [selectedDriveToApply, setSelectedDriveToApply] = useState(null);
 
   useEffect(() => {
     if (activeTab === 'browse') {
@@ -22,7 +27,13 @@ const JobSeekerDashboard = () => {
     } else if (activeTab === 'applications') {
       fetchMyApplications();
     }
-  }, [activeTab]);
+  }, [activeTab, user]);
+
+  useEffect(() => {
+    if (user?.id) {
+      setMyApplications(getApplicationsForUser(user.id));
+    }
+  }, [user]);
 
   const fetchDrives = async () => {
     try {
@@ -40,33 +51,56 @@ const JobSeekerDashboard = () => {
     }
   };
 
-  const fetchMyApplications = async () => {
+  const fetchMyApplications = () => {
+    if (!user?.id) {
+      setMyApplications([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
-      const response = await applicationsAPI.getMyApplications();
-      if (response.data.message === 'success') {
-        setMyApplications(response.data.data);
-      }
+      const applications = getApplicationsForUser(user.id);
+      setMyApplications(applications);
     } catch (err) {
-      setError('Failed to fetch applications.');
+      setError('Failed to load stored applications.');
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApply = async (driveId) => {
-    try {
-      const response = await applicationsAPI.applyForDrive(driveId);
-      if (response.data.message === 'success') {
-        alert('Application submitted successfully!');
-        fetchDrives();
-      }
-    } catch (err) {
-      alert(err.response?.data?.data || 'Failed to submit application');
+  const handleApply = (drive) => {
+    if (!user?.id) {
+      navigate('/login');
+      return;
     }
+
+    setSelectedDriveToApply(drive);
+    setConfirmApplyOpen(true);
   };
+
+  const confirmApply = () => {
+    if (!user?.id || !selectedDriveToApply) return;
+
+    const application = addApplicationForUser(user.id, selectedDriveToApply);
+    if (!application) {
+      showToast('You have already applied to this job.', 'info');
+    } else {
+      setMyApplications(getApplicationsForUser(user.id));
+      showToast('Application saved successfully!', 'success');
+    }
+
+    setConfirmApplyOpen(false);
+    setSelectedDriveToApply(null);
+  };
+
+  const cancelApply = () => {
+    setConfirmApplyOpen(false);
+    setSelectedDriveToApply(null);
+  };
+
+  const appliedDriveIds = new Set(myApplications.map((app) => app.driveId));
 
   const filteredDrives = drives.filter(drive => {
     const matchesSearch = drive.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -216,9 +250,10 @@ const JobSeekerDashboard = () => {
                     </button>
                     <button 
                       className="btn-apply"
-                      onClick={() => handleApply(drive.driveId)}
+                      onClick={() => handleApply(drive)}
+                      disabled={appliedDriveIds.has(drive.driveId)}
                     >
-                      Apply Now
+                      {appliedDriveIds.has(drive.driveId) ? 'Applied' : 'Apply Now'}
                     </button>
                   </div>
 
@@ -301,7 +336,23 @@ const JobSeekerDashboard = () => {
                 <p>{user?.role}</p>
               </div>
             </div>
-            <button className="btn-secondary">Edit Profile</button>
+            {/* <button className="btn-secondary">Edit Profile</button> */}
+          </div>
+        </div>
+      )}
+
+      {confirmApplyOpen && selectedDriveToApply && (
+        <div className="apply-modal-overlay">
+          <div className="apply-modal-card">
+            <div className="modal-header">
+              <h3>Confirm Application</h3>
+              <button className="modal-close" onClick={cancelApply}>&times;</button>
+            </div>
+            <p>Are you sure you want to apply for "{selectedDriveToApply.title}" at {selectedDriveToApply.companyName}?</p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelApply}>Cancel</button>
+              <button className="btn-primary" onClick={confirmApply}>Yes, Apply</button>
+            </div>
           </div>
         </div>
       )}

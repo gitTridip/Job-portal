@@ -5,6 +5,7 @@ import './styles/global.css';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 // Components
 import Navbar from './Components/Navbar';
@@ -22,9 +23,10 @@ import RecruiterDashboard from './Components/RecruiterDashboard';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Navbar />
-        <Routes>
+      <ToastProvider>
+        <Router>
+          <Navbar />
+          <Routes>
           {/* Public Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/register" element={<Register />} />
@@ -56,7 +58,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </ToastProvider>
+  </AuthProvider>
   );
 }
 

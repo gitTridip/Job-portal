@@ -3,17 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Eye, MapPin, Calendar, Clock, AlertCircle, Loader, BarChart3, Users, Briefcase } from 'lucide-react';
 import { driveAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { getDriveCache, setDriveCache, getTotalApplicationsForDriveIds, getConversionRateForDriveIds, getClosedCount, incrementClosedCount } from '../utils/localStorage';
 import './RecruiterDashboard.css';
 
 const RecruiterDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('overview');
   const [drives, setDrives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showPostForm, setShowPostForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [driveToDelete, setDriveToDelete] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -29,9 +34,13 @@ const RecruiterDashboard = () => {
     contactEmail: '',
   });
 
+  const userId = user?.id ?? user?._id;
+
   useEffect(() => {
-    fetchDrives();
-  }, []);
+    if (userId !== undefined && userId !== null) {
+      fetchDrives();
+    }
+  }, [userId]);
 
   const fetchDrives = async () => {
     try {
@@ -39,9 +48,13 @@ const RecruiterDashboard = () => {
       setError('');
       const response = await driveAPI.getAll();
       if (response.data.message === 'success') {
-        // Filter only drives created by current user
-        const userDrives = response.data.data
+        const apiDrives = response.data.data || [];
+        const userDrives = apiDrives.filter((drive) => {
+          const ownerIds = [drive.createdBy, drive.adminId].filter((id) => id !== undefined && id !== null);
+          return ownerIds.some((id) => `${id}` === `${userId}`);
+        });
         setDrives(userDrives);
+        setDriveCache(userId, userDrives);
       }
     } catch (err) {
       setError('Failed to fetch job drives.');
@@ -64,10 +77,10 @@ const RecruiterDashboard = () => {
     setError('');
 
     // Validate required fields
-    if (!formData.title || !formData.companyName || !formData.description || 
-        !formData.city || !formData.venue || !formData.driveDate || !formData.reportingTime ||
-        !formData.qualificationRequired || !formData.experienceRequired ||
-        !formData.contactPerson || !formData.contactEmail) {
+    if (!formData.title || !formData.companyName || !formData.description ||
+      !formData.city || !formData.venue || !formData.driveDate || !formData.reportingTime ||
+      !formData.qualificationRequired || !formData.experienceRequired ||
+      !formData.contactPerson || !formData.contactEmail) {
       setError('All fields are required');
       return;
     }
@@ -77,17 +90,33 @@ const RecruiterDashboard = () => {
         // Update existing drive
         const response = await driveAPI.update(editingId, formData);
         if (response.data.message === 'success') {
-          alert('Job drive updated successfully!');
+          showToast('Job drive updated successfully!', 'success');
           resetForm();
           setEditingId(null);
+          const updatedDrives = drives.map((drive) =>
+            drive.driveId === editingId ? { ...drive, ...formData } : drive
+          );
+          setDrives(updatedDrives);
+          setDriveCache(userId, updatedDrives);
           fetchDrives();
         }
       } else {
         // Create new drive
         const response = await driveAPI.create(formData);
         if (response.data.message === 'success') {
-          alert('Job drive posted successfully!');
+          showToast('Job drive posted successfully!', 'success');
           resetForm();
+          const createdDrive = response.data.data;
+          if (createdDrive) {
+            const driveWithOwner = {
+              ...createdDrive,
+              createdBy: createdDrive.createdBy || userId,
+              adminId: createdDrive.adminId || userId,
+            };
+            const newDriveList = [...drives, driveWithOwner];
+            setDrives(newDriveList);
+            setDriveCache(userId, newDriveList);
+          }
           fetchDrives();
         }
       }
@@ -115,15 +144,35 @@ const RecruiterDashboard = () => {
     window.scrollTo(0, 0);
   };
 
-  const handleDelete = async (driveId) => {
-    if (window.confirm('Are you sure you want to delete this job drive?')) {
-      try {
-        await driveAPI.delete(driveId);
-        alert('Job drive deleted successfully!');
-        fetchDrives();
-      } catch (err) {
-        setError(err.response?.data?.data || 'Failed to delete job drive');
-      }
+  const handleView = (driveId) => {
+    navigate(`/drive/${driveId}`);
+  };
+
+  const openDeleteModal = (drive) => {
+    setDriveToDelete(drive);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDriveToDelete(null);
+    setDeleteModalOpen(false);
+  };
+
+  const confirmDelete = async () => {
+    if (!driveToDelete) return;
+
+    try {
+      await driveAPI.delete(driveToDelete.driveId);
+      const updatedDrives = drives.filter((drive) => drive.driveId !== driveToDelete.driveId);
+      setDrives(updatedDrives);
+      setDriveCache(userId, updatedDrives);
+      // increment per-user closed count so UI can display cumulative closed jobs
+      try { incrementClosedCount(userId, 1); } catch (err) { console.warn('incrementClosedCount failed', err); }
+      showToast('Job drive deleted successfully!', 'success');
+      closeDeleteModal();
+      fetchDrives();
+    } catch (err) {
+      setError(err.response?.data?.data || 'Failed to delete job drive');
     }
   };
 
@@ -145,8 +194,13 @@ const RecruiterDashboard = () => {
     setEditingId(null);
   };
 
-  const activeDrives = drives.filter(d => d.status === 'Active');
-  const closedDrives = drives.filter(d => d.status === 'Closed');
+  const activeDrives = drives.filter((d) => d.status?.toLowerCase() === 'active');
+  const recruiterDriveIds = drives.map((drive) => drive.driveId).filter(Boolean);
+  const totalApplications = getTotalApplicationsForDriveIds(recruiterDriveIds);
+  const conversionRate = getConversionRateForDriveIds(recruiterDriveIds);
+  const storedClosed = getClosedCount(userId);
+  const currentClosed = drives.filter((d) => d.status?.toLowerCase() !== 'active').length;
+  const closedDrivesCount = storedClosed + currentClosed;
 
   return (
     <div className="recruiter-dashboard">
@@ -156,7 +210,7 @@ const RecruiterDashboard = () => {
           <h1>Welcome, {user?.name}! 👋</h1>
           <p>Manage your job postings and recruitment drives</p>
         </div>
-        <button 
+        <button
           className="btn-primary btn-large"
           onClick={() => setShowPostForm(!showPostForm)}
         >
@@ -184,7 +238,7 @@ const RecruiterDashboard = () => {
         <div className="stat-card">
           <AlertCircle size={24} />
           <div>
-            <span className="stat-number">{closedDrives.length}</span>
+            <span className="stat-number">{closedDrivesCount}</span>
             <span className="stat-label">Closed</span>
           </div>
         </div>
@@ -192,13 +246,13 @@ const RecruiterDashboard = () => {
 
       {/* Navigation Tabs */}
       <div className="dashboard-tabs">
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
           onClick={() => setActiveTab('overview')}
         >
           My Postings
         </button>
-        <button 
+        <button
           className={`tab-btn ${activeTab === 'analytics' ? 'active' : ''}`}
           onClick={() => setActiveTab('analytics')}
         >
@@ -210,7 +264,7 @@ const RecruiterDashboard = () => {
       {showPostForm && (
         <div className="post-form-section">
           <h2>{editingId ? 'Edit Job Posting' : 'Create New Job Posting'}</h2>
-          
+
           {error && (
             <div className="error-banner">
               <AlertCircle size={20} />
@@ -390,11 +444,10 @@ const RecruiterDashboard = () => {
               <Briefcase size={64} />
               <h3>No Job Postings Yet</h3>
               <p>Start by posting your first job opportunity</p>
-              <button 
+              <button
                 className="btn-primary"
                 onClick={() => setShowPostForm(true)}
               >
-                <Plus size={20} />
                 Post Your First Job
               </button>
             </div>
@@ -435,20 +488,20 @@ const RecruiterDashboard = () => {
                   </div>
 
                   <div className="posting-actions">
-                    <button className="btn-icon">
+                    <button className="btn-icon" onClick={() => handleView(drive.driveId)}>
                       <Eye size={18} />
                       View
                     </button>
-                    <button 
+                    <button
                       className="btn-icon"
                       onClick={() => handleEdit(drive)}
                     >
                       <Edit2 size={18} />
                       Edit
                     </button>
-                    <button 
+                    <button
                       className="btn-icon btn-danger"
-                      onClick={() => handleDelete(drive.driveId)}
+                      onClick={() => openDeleteModal(drive)}
                     >
                       <Trash2 size={18} />
                       Delete
@@ -469,8 +522,7 @@ const RecruiterDashboard = () => {
             <div className="analytics-grid">
               <div className="analytics-card">
                 <h4>Total Applications</h4>
-                <p className="big-number">--</p>
-                <small>Coming soon</small>
+                <p className="big-number">{totalApplications}</p>
               </div>
               <div className="analytics-card">
                 <h4>Active Drives</h4>
@@ -478,13 +530,36 @@ const RecruiterDashboard = () => {
               </div>
               <div className="analytics-card">
                 <h4>Closed Drives</h4>
-                <p className="big-number">{closedDrives.length}</p>
+                <p className="big-number">{closedDrivesCount}</p>
               </div>
               <div className="analytics-card">
                 <h4>Conversion Rate</h4>
-                <p className="big-number">--</p>
-                <small>Coming soon</small>
+                <p className="big-number">{conversionRate}%</p>
+                <small>Applications per posted drive</small>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-header">
+              <h3>Confirm Delete</h3>
+              <button className="modal-close" onClick={closeDeleteModal}>&times;</button>
+            </div>
+            <p>
+              Are you sure you want to delete the job drive "{driveToDelete?.title}"?
+              This action cannot be undone.
+            </p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={closeDeleteModal}>
+                Cancel
+              </button>
+              <button className="btn-primary btn-danger-modal" onClick={confirmDelete}>
+                Delete
+              </button>
             </div>
           </div>
         </div>

@@ -23,7 +23,12 @@ export const AuthProvider = ({ children }) => {
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
+        const normalizedUser = {
+          ...parsedUser,
+          id: parsedUser.id || parsedUser._id,
+          role: parsedUser.role ? parsedUser.role.toLowerCase() : 'candidate',
+        };
+        setUser(normalizedUser);
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Error parsing user data', error);
@@ -35,10 +40,11 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
-    // Ensure role is normalized to lowercase
+    // Ensure user id and role are normalized
     const normalizedUser = {
       ...userData,
-      role: userData.role ? userData.role.toLowerCase() : 'candidate'
+      id: userData.id || userData._id,
+      role: userData.role ? userData.role.toLowerCase() : 'candidate',
     };
     setUser(normalizedUser);
     setIsAuthenticated(true);
@@ -64,7 +70,7 @@ export const AuthProvider = ({ children }) => {
 
   const isRecruiter = () => {
     const role = getUserRole();
-    return role === 'Admin' || role === 'employer';
+    return role === 'admin' || role === 'employer';
   };
 
   return (

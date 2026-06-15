@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MapPin, Briefcase, DollarSign, Clock, Loader, AlertCircle, Share2 } from 'lucide-react';
-import { jobsAPI, applicationsAPI } from '../api/api';
+import { jobsAPI } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
+import { addApplicationForUser, getApplicationByUserAndDrive } from '../utils/localStorage';
 import './JobDetails.css';
 
 const JobDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
+  const { showToast } = useToast();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [confirmApplyOpen, setConfirmApplyOpen] = useState(false);
   const [applying, setApplying] = useState(false);
   const [applied, setApplied] = useState(false);
 
@@ -32,27 +36,45 @@ const JobDetails = () => {
     }
   };
 
-  const handleApply = async () => {
+  const getDriveId = (jobData) => jobData?.driveId || jobData?.id || id;
+
+  useEffect(() => {
+    if (user?.id && job) {
+      const driveId = getDriveId(job);
+      setApplied(Boolean(getApplicationByUserAndDrive(user.id, driveId)));
+    }
+  }, [user, job, id]);
+
+  const handleApply = () => {
     if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
-    if (user?.role !== 'Employee') {
+    const role = user?.role?.toLowerCase();
+    if (role !== 'candidate' && role !== 'jobseeker' && role !== 'employee') {
       setError('Only job seekers can apply for jobs');
       return;
     }
 
-    try {
-      setApplying(true);
-      await applicationsAPI.create({ jobId: id });
+    setConfirmApplyOpen(true);
+  };
+
+  const confirmApply = () => {
+    if (!user?.id || !job) return;
+
+    const application = addApplicationForUser(user.id, job);
+    if (!application) {
+      showToast('You have already applied to this job.', 'info');
+    } else {
       setApplied(true);
-      setError('');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to apply for job');
-    } finally {
-      setApplying(false);
+      showToast('Application saved successfully!', 'success');
     }
+    setConfirmApplyOpen(false);
+  };
+
+  const cancelApply = () => {
+    setConfirmApplyOpen(false);
   };
 
   if (loading) {
@@ -167,9 +189,9 @@ const JobDetails = () => {
                   <button
                     onClick={handleApply}
                     className="btn-apply"
-                    disabled={applying}
+                    disabled={applying || applied}
                   >
-                    {applying ? (
+                    {applied ? 'Applied' : applying ? (
                       <>
                         <Loader size={18} className="spinner" />
                         Applying...
@@ -207,6 +229,21 @@ const JobDetails = () => {
           </div>
         </div>
       </div>
+      {confirmApplyOpen && job && (
+        <div className="apply-modal-overlay">
+          <div className="apply-modal-card">
+            <div className="modal-header">
+              <h3>Confirm Application</h3>
+              <button className="modal-close" onClick={cancelApply}>&times;</button>
+            </div>
+            <p>Are you sure you want to apply for "{job.title}" at {job.companyName}?</p>
+            <div className="modal-actions">
+              <button className="btn-secondary" onClick={cancelApply}>Cancel</button>
+              <button className="btn-primary" onClick={confirmApply}>Yes, Apply</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

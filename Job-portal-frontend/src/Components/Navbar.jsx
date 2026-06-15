@@ -10,7 +10,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const userRole = getUserRole();
-  const isRecruiter = userRole === 'Admin';
+  const isRecruiter = userRole === 'admin';
 
   const handleLogout = async () => {
     try {
@@ -86,7 +86,7 @@ const Navbar = () => {
             <div className="user-menu">
               <div className="user-info">
                 <span className="user-name">{user?.name || user?.Name || 'User'}</span>
-                <span className="user-role">{isRecruiter ? 'Admin' : 'Job Seeker'}</span>
+                <span className="user-role">{isRecruiter ? 'Recruiter' : 'Job Seeker'}</span>
               </div>
               <button className="logout-btn" onClick={handleLogout}>
                 <LogOut size={18} />
