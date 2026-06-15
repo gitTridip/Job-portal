@@ -92,6 +92,16 @@ namespace Job_portal_backend
             builder.Services.AddSwaggerGen();
             builder.Services.AddDbContext<UsersContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("dbconn")));
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll",
+                    policy =>
+                    {
+                        policy.AllowAnyOrigin()
+                              .AllowAnyHeader()
+                              .AllowAnyMethod();
+                    });
+            });
 
             var app = builder.Build();
             app.MapOpenApi();
@@ -107,7 +117,7 @@ namespace Job_portal_backend
             }
 
             // Use CORS
-            app.UseCors("AllowFrontend");
+            app.UseCors("AllowAll");
 
             app.UseAuthentication();
             app.UseAuthorization();
