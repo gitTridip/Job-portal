@@ -94,6 +94,9 @@ namespace Job_portal_backend
             options.UseSqlServer(builder.Configuration.GetConnectionString("dbconn")));
 
             var app = builder.Build();
+            app.MapOpenApi();
+            app.UseSwagger();
+            app.UseSwaggerUI();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
