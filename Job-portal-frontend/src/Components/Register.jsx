@@ -71,13 +71,15 @@ const Register = () => {
         });
 
         if (loginResponse.data.message === 'success' && loginResponse.data.data) {
+         
           const { token, user } = loginResponse.data.data;
           if (token && user) {
             login(user, token);
             setFormData({ name: '', email: '', password: '', confirmPassword: '', mobile: '', role: 'candidate' });
             // Redirect based on role
-            const redirectPath = user.role?.toLowerCase() === 'recruiter' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
+            const redirectPath = user.role?.toLowerCase() === 'admin' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
             navigate(redirectPath);
+
           }
         }
       } else {
@@ -168,8 +170,8 @@ const Register = () => {
                   <p>Looking for opportunities</p>
                 </div>
                 <div 
-                  className={`role-card ${formData.role === 'recruiter' ? 'active' : ''}`}
-                  onClick={() => setFormData(prev => ({ ...prev, role: 'recruiter' }))}
+                  className={`role-card ${formData.role === 'Admin' ? 'active' : ''}`}
+                  onClick={() => setFormData(prev => ({ ...prev, role: 'Admin' }))}
                 >
                   <div className="role-icon">🏢</div>
                   <h3>Recruiter</h3>

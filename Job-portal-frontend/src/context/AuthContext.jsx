@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
 
   const isRecruiter = () => {
     const role = getUserRole();
-    return role === 'recruiter' || role === 'employer';
+    return role === 'Admin' || role === 'employer';
   };
 
   return (

@@ -50,7 +50,7 @@ export const driveAPI = {
   // POST /api/drives - Create drive (Admin only, requires JWT)
   // Payload: { title, companyName, description, city, venue, driveDate (yyyy-MM-dd), reportingTime (HH:mm:ss), qualificationRequired, experienceRequired, contactPerson, contactEmail }
   // Response: { message: "success", data: { driveId, title, companyName, description, city, venue, driveDate, reportingTime, qualificationRequired, experienceRequired, contactPerson, contactEmail, status, createdBy, createdOn } }
-  create: (data) => api.post('/drives', data),
+  create: (data) => api.post('/drive', data),
   
   // PUT /api/drives/{id} - Update drive (Admin only, requires JWT)
   // Payload: { title, companyName, description, city, venue, driveDate (yyyy-MM-dd), reportingTime (HH:mm:ss), qualificationRequired, experienceRequired, contactPerson, contactEmail }

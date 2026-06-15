@@ -46,7 +46,7 @@ function App() {
           <Route 
             path="/recruiter-dashboard" 
             element={
-              <ProtectedRoute requiredRole="recruiter">
+              <ProtectedRoute requiredRole="Admin">
                 <RecruiterDashboard />
               </ProtectedRoute>
             } 

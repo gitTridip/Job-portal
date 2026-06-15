@@ -45,10 +45,14 @@ const Login = () => {
       // Backend response: { message: "success", data: { token, expiresAt, user: { id, name, email, mobile, role, createdOn } } }
       if (response.data.message === 'success' && response.data.data) {
         const { token, user } = response.data.data;
+          console.log('Login Response:', { token, user, Response: response });
+
         if (token && user) {
           login(user, token);
           // Redirect based on role
-          const redirectPath = user.role?.toLowerCase() === 'recruiter' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
+          const redirectPath = user.role?.toLowerCase() === 'admin' ? '/recruiter-dashboard' : '/job-seeker-dashboard';
+            console.log('Redirecting to:', redirectPath);
+
           navigate(redirectPath);
         } else {
           setError('Login failed. Invalid response from server.');
